@@ -17,6 +17,7 @@ __pycache__/
 
 # VS Code (User/Workspace settings, but not necessary files like .code-workspace)
 .vscode/
+*.code-workspace
 
 # Build artifacts
 dist/
