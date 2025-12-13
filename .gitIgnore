@@ -1,0 +1,35 @@
+# Python-specific files and folders
+# ----------------------------------
+
+# Virtual environment folders (Crucial to ignore!)
+venv/
+.venv/
+env/
+.env/
+
+# Byte-code and compiled files
+__pycache__/
+*.pyc
+*.$py.class
+
+# IDE and Editor Directories and Files
+# ----------------------------------
+
+# VS Code (User/Workspace settings, but not necessary files like .code-workspace)
+.vscode/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Operating System Files
+# ---------------------
+.DS_Store # macOS
+Thumbs.db # Windows
+
+# Temporary / Log files
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
