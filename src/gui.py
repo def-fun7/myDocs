@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog 
 from .logic.fileprocessor import FileProcessor
-from config import PROCESS_OPTIONS_A, PROCESS_OPTIONS_B
+from .config import PROCESS_OPTIONS_A, PROCESS_OPTIONS_B
 
 class CheckboxGroup(tk.LabelFrame):
     def __init__(self, master, title, options, on_select_all_callback):
