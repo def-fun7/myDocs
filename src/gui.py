@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 from tkinter import filedialog 
 from .logic.fileprocessor import FileProcessor
@@ -16,21 +17,12 @@ class CheckboxGroup(tk.LabelFrame):
         self._create_widgets()
 
     def _create_widgets(self):
-        # Select All Checkbox
-        tk.Checkbutton(self, text="Select All", variable=self.select_all_var,
-                       command=self._toggle_all).pack(anchor=tk.W)
 
         # Individual Checkboxes
         for name in self.options:
             var = tk.BooleanVar(value=False)
             self.checkbox_vars[name] = var
             tk.Checkbutton(self, text=name, variable=var).pack(anchor=tk.W)
-            
-    def _toggle_all(self):
-        """Checks or unchecks all individual checkboxes."""
-        set_value = self.select_all_var.get()
-        for var in self.checkbox_vars.values():
-            var.set(set_value)
 
 # --- 2. Main Application Frame (The orchestrator) ---
 
@@ -38,7 +30,7 @@ class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
-        self.master.title("File Processor App")
+        self.master.title("myDocs")
         
         # --- Control Variables ---
         self.separate_folders_var = tk.BooleanVar(value=False) 
@@ -48,7 +40,7 @@ class Application(tk.Frame):
         
         self.pack(fill=tk.BOTH, expand=True) 
         self._configure_grid()
-        self._create_widgets()
+        self._create_widgets()  
 
 
     def _configure_grid(self):
@@ -66,10 +58,10 @@ class Application(tk.Frame):
         self._setup_file_selection(row_start=1)
 
         # Row 3: Checkbox Groups (Using the new CheckboxGroup class)
-        self.group_a = CheckboxGroup(self, "Processing Type 1", PROCESS_OPTIONS_A, self.run_process)
+        self.group_a = CheckboxGroup(self, "File Conversions", PROCESS_OPTIONS_A, self.run_process)
         self.group_a.grid(row=3, column=0, columnspan=1, padx=10, pady=5, sticky=tk.NSEW)
         
-        self.group_b = CheckboxGroup(self, "Processing Type 2", PROCESS_OPTIONS_B, self.run_process)
+        self.group_b = CheckboxGroup(self, "JPG/JPEG Compression", PROCESS_OPTIONS_B, self.run_process)
         self.group_b.grid(row=3, column=2, columnspan=1, padx=10, pady=5, sticky=tk.NSEW)
 
         # Row 4: Run Control Row
@@ -116,20 +108,41 @@ class Application(tk.Frame):
         return selected
 
     def select_files(self):
+        SUPPORTED_EXTS = "*.jpg *.jpeg *.png *.webp *.bmp *.tiff *.pdf"
+    
         file_paths = filedialog.askopenfilenames(
-            title="Select one or more files",
-            filetypes=[("All files", "*.*"), ("Text files", "*.txt")]
+            title="Select one or more files to process",
+            filetypes=[
+                # This is the primary filter group
+                ("Convertible & Compressible Files", SUPPORTED_EXTS),
+                # General grouping for all supported image types
+                ("All Image Files", "*.jpg *.jpeg *.png *.webp *.bmp *.tiff"),
+                # Compressable
+                ("Compressable Files", "*.jpg *.jpeg"),
+                # Specific PDF entry
+                ("PDF Documents", "*.pdf"),
+                # Keep a general "All files" option
+                ("All files", "*.*")
+            ]
         )
-        # ... (rest of select_files remains the same)
+        
         if file_paths:
             self.selected_files = list(file_paths)
-            display_text = f"{len(file_paths)} files selected." if len(file_paths) > 1 else file_paths[0]
+            
+            # Display logic: show the count if > 1, otherwise show the path
+            if len(file_paths) > 1:
+                display_text = f"{len(file_paths)} files selected."
+            else:
+                # We display the basename (just the file name) to keep the GUI clean
+                display_text = os.path.basename(file_paths[0]) 
+                
             self.file_path_label.config(text=display_text)
             self.log_message(f"Selected {len(file_paths)} files.")
         else:
             self.log_message("File selection cancelled.")
             self.selected_files = [] 
-            
+            self.file_path_label.config(text="No files selected")
+                
     def run_process(self):
         # 1. Gather all necessary input data
         file_paths = self.selected_files
