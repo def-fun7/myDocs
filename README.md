@@ -1,6 +1,6 @@
 # 🚀 myDocs
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/def-fun7/myDocs)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-yellow)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -81,7 +81,7 @@ The output directory (`myDocs/`) is created relative to the application's locati
 
 ### Option 1: Standalone Executable (Recommended)
 
-1. Go to the Releases page.
+1. Go to [Releases Page](https://github.com/def-fun7/myDocs/releases)
 2. Download **myDocs.zip**.
 3. Unzip and run **myDocs.exe**.
 
@@ -92,8 +92,8 @@ The output directory (`myDocs/`) is created relative to the application's locati
 #### Clone and Setup
 
 ```bash
-git clone https://github.com/YourUsername/MyFileProcessorApp.git
-cd MyFileProcessorApp
+git clone https://github.com/def-fun7/myDocs.git
+cd myDocs
 pip install -r requirements.txt
 ```
 
