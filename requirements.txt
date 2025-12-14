@@ -1,0 +1,12 @@
+# requirements.txt
+
+# GUI & Image Processing
+Pillow
+# PyInstaller is required if users want to build the executable themselves
+pyinstaller
+
+# PDF Conversion (required for preview and conversion to/from PDF)
+pdf2image
+
+# File copying utility
+# Note: shutil is a built-in Python module, not listed here.
