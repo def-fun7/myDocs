@@ -1,6 +1,8 @@
 import os
 import tkinter as tk
 from tkinter import filedialog 
+from PIL import Image, ImageTk # <-- ADDED
+from pdf2image import convert_from_path
 from .fileprocessor import FileProcessor
 from .config import PROCESS_OPTIONS_A, PROCESS_OPTIONS_B
 
@@ -127,10 +129,31 @@ class Application(tk.Frame):
         # Row 5: Run Control Row (Moved down to Row 5)
         self._setup_run_controls(row_start=5)
 
-        # Row 6: Message Area (Moved down to Row 6)
-        self.message_area = tk.Text(self, height=5, width=60, state=tk.DISABLED)
-        self.message_area.grid(row=6, column=0, columnspan=3, padx=10, pady=(0, 10), sticky=tk.EW)
+       # Row 6: Log and Preview Area
+        self._setup_log_and_preview(row_start=6)
 
+        # Initialize the image reference (Tkinter needs this to keep the image visible)
+        self.preview_image_tk = None
+        
+    def _setup_log_and_preview(self, row_start):
+        """Sets up the Text log and the Image/File preview side-by-side."""
+        
+        # Outer Frame to hold the two side-by-side components
+        bottom_frame = tk.Frame(self)
+        bottom_frame.grid(row=row_start, column=0, columnspan=3, padx=10, pady=(0, 10), sticky=tk.EW)
+        
+        # --- Left Side: Message Area (Log) ---
+        self.message_area = tk.Text(bottom_frame, height=12, width=40, state=tk.DISABLED)
+        self.message_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        
+        # --- Right Side: Preview Area ---
+        self.preview_label = tk.Label(bottom_frame, text="File Preview", relief=tk.SUNKEN, width=20, height=12)
+        self.preview_label.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(5, 0))
+
+        # Configure weights so the log and preview expand equally
+        bottom_frame.grid_columnconfigure(0, weight=1)
+        bottom_frame.grid_columnconfigure(1, weight=1)
+        
     def _setup_master_radio_buttons(self, row_start):
         frame = tk.Frame(self)
         frame.grid(row=row_start, column=0, columnspan=3, pady=(0, 10))
@@ -240,6 +263,8 @@ class Application(tk.Frame):
                 
             self.file_path_label.config(text=display_text)
             self.log_message(f"Selected {len(file_paths)} files.")
+            
+            self._display_preview(self.selected_files[0])
         else:
             self.log_message("File selection cancelled.")
             self.selected_files = [] 
@@ -268,6 +293,50 @@ class Application(tk.Frame):
         # 3. Hand off the task to the processor
         self.file_processor.run_all(file_paths, selected_options, separate_folders)    
     
+    def _display_preview(self, file_path):
+        """Handles loading and displaying the file preview."""
+        extension = os.path.splitext(file_path)[-1].lower()
+        
+        # Define the max size for the preview (adjust as needed)
+        max_size = (200, 200)
+
+        # Clear previous content
+        self.preview_label.config(image='', text="File Preview")
+        self.preview_image_tk = None # Ensure reference is cleared
+
+        try:
+            if extension in ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tiff']:
+                img = Image.open(file_path)
+                self._update_preview_label(img, max_size, os.path.basename(file_path))
+                
+            elif extension == '.pdf':
+                # Convert first page of PDF to image for preview
+                # NOTE: This requires Poppler to be installed externally.
+                pages = convert_from_path(file_path, first_page=1, last_page=1, size=max_size)
+                if pages:
+                    self._update_preview_label(pages[0], max_size, os.path.basename(file_path))
+                else:
+                    self.preview_label.config(text=f"PDF ({os.path.basename(file_path)}) - No preview available.")
+                    
+            else:
+                self.preview_label.config(text=f"File Type Not Viewable:\n{os.path.basename(file_path)}")
+
+        except Exception as e:
+            self.preview_label.config(text=f"Error loading file: {os.path.basename(file_path)}\n{e}")
+
+    def _update_preview_label(self, img_pil, max_size, filename):
+        """Resizes the PIL image and updates the Tkinter label."""
+        
+        # Create a copy and resize it, maintaining aspect ratio
+        img_pil.thumbnail(max_size)
+        
+        # Convert PIL Image to Tkinter PhotoImage
+        self.preview_image_tk = ImageTk.PhotoImage(img_pil)
+        
+        # Update the label with the image and a small text footer
+        self.preview_label.config(image=self.preview_image_tk, 
+                                  text=filename, 
+                                  compound=tk.BOTTOM) # Place text below the image
             
     def log_message(self, message):
         """Helper function to print messages to the text area."""
