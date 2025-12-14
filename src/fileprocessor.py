@@ -292,22 +292,67 @@ class FileProcessor:
         except Exception as e:
             return f"Compression failed: {e}"
 
-    # --- ENTRY POINTS (Called by processing_map) ---
-    
+    # --- ENTRY POINTS (Called by processing_map) ---# In logic/fileprocessor.py
+
     def _compress_to_size_entry(self, file_path, output_dir, separate_folders, size_key):
-        """Entry method for B2, B3, B4, B5 (single target size)."""
+        """
+        Entry method for B2, B3, B4, B5 (single target size).
+        OPTIMIZATION: Skips if the file is already under the target size.
+        """
+        target_bytes = self.TARGET_SIZES[size_key]
+        
+        # 1. Check current file size
+        try:
+            original_size = os.path.getsize(file_path)
+        except OSError as e:
+            return f"Error reading file size for compression: {e}"
+
+        # 2. Optimization Check
+        if original_size <= target_bytes:
+            original_kb = round(original_size / 1024, 2)
+            return f"Skipped: File ({original_kb} KB) is already under the target size of {size_key}."
+
+        # 3. If file is larger, proceed to compression
         return self._compress_file(file_path, output_dir, size_key, separate_folders)
 
+    # In logic/fileprocessor.py
+
     def _compress_all_sizes_entry(self, file_path, output_dir, separate_folders):
-        """Entry method for B1 (all target sizes)."""
+        """
+        Entry method for B1 (all target sizes).
+        OPTIMIZATION: Skips targets larger than the original file size.
+        """
         results = []
         
-        # Sort by largest size first for efficiency (since we create a new file each time)
-        for size_key in reversed(list(self.TARGET_SIZES.keys())):
-            results.append(self._compress_file(file_path, output_dir, size_key, separate_folders))
+        # Get the original file size
+        try:
+            original_size = os.path.getsize(file_path)
+        except OSError as e:
+            return f"Error reading file size for compression: {e}"
+
+        # Get size keys and sort them from largest to smallest (e.g., '5 MB', '1 MB', '500 KB', '250 KB')
+        # This allows us to skip all larger targets once we find a match.
+        size_keys_sorted = sorted(self.TARGET_SIZES.keys(), 
+                                key=lambda k: self.TARGET_SIZES[k], 
+                                reverse=True)
+                                
+        self.gui.log_message(f"    Original size: {round(original_size / 1024 / 1024, 2)} MB")
+
+        for size_key in size_keys_sorted:
+            target_bytes = self.TARGET_SIZES[size_key]
             
+            # --- NEW OPTIMIZATION LOGIC ---
+            if original_size <= target_bytes:
+                # If the original file size is ALREADY under the target size,
+                # we skip this target and just log that it's already met.
+                results.append(f"Skipped {size_key}: File is already under the target size.")
+                continue # Move to the next (smaller) compression target
+            
+            # If the original file is larger than the target, we proceed with compression.
+            results.append(self._compress_file(file_path, output_dir, size_key, separate_folders))
+                
         return "\n    ".join(results)
-    
+        
     # --- run_all and process_single_file will need updates next ---
     # (The following code replaces the run_all and process_single_file from before)
 
